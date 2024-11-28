@@ -49,7 +49,7 @@
             background-color: #ffda36;
         }
 
-        .payment-form {
+        .payment-form, .ticket-check {
             display: none;
             background-color: #282850;
             padding: 15px;
@@ -57,20 +57,19 @@
             margin-top: 10px;
             width: 100%;
             max-width: 400px;
-            position: relative;
         }
 
-        .payment-form h2 {
+        .payment-form h2, .ticket-check h2 {
             color: #f0c000;
             font-size: 1.2rem;
         }
 
-        .payment-form p, .payment-form label {
+        .payment-form p, .ticket-check p, .payment-form label, .ticket-check label {
             font-size: 0.9rem;
             margin: 10px 0;
         }
 
-        .payment-form input, .payment-form button {
+        .payment-form input, .payment-form button, .ticket-check input, .ticket-check button {
             margin: 10px 0;
             padding: 10px;
             width: 100%;
@@ -79,31 +78,14 @@
             border-radius: 5px;
         }
 
-        .payment-form button {
+        .payment-form button, .ticket-check button {
             background-color: #f0c000;
             color: #1c1c3c;
             cursor: pointer;
         }
 
-        .payment-form button:hover {
+        .payment-form button:hover, .ticket-check button:hover {
             background-color: #ffda36;
-        }
-
-        .close-button {
-            background-color: #ff4d4d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px;
-            cursor: pointer;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 0.9rem;
-        }
-
-        .close-button:hover {
-            background-color: #ff6666;
         }
 
         .timer-section {
@@ -196,13 +178,12 @@
             <button class="cta-button" onclick="showPaymentForm()">Buy Ticket and Join</button>
             <!-- Payment Form -->
             <div id="paymentForm" class="payment-form">
-                <button class="close-button" onclick="closePaymentForm()">Close</button>
                 <h2>Payment Details</h2>
                 <p><strong>USDT Deposit Address:</strong> <span style="color: #fff;">TSF12A4...1X23</span></p>
                 <label for="telegram">Enter Your Telegram Username:</label>
                 <input type="text" id="telegram" placeholder="Your Telegram username">
                 <p><strong>Minimum Deposit: 10 USDT</strong></p>
-                <p>Time remaining for payment: <span id="timer">24:00:00</span></p>
+                <p>Time remaining for payment: <span id="paymentTimer">24:00:00</span></p>
                 <button onclick="paymentDone()">I have paid</button>
             </div>
         </header>
@@ -210,14 +191,18 @@
         <!-- Timer Section -->
         <div class="timer-section">
             <h2>Time Left for Draw:</h2>
-            <div class="timer">
-                <span>02</span>:<span>14</span>:<span>33</span>
-            </div>
+            <div class="timer" id="drawTimer">24:00:00</div>
         </div>
 
         <!-- Check Ticket Button -->
         <div class="check-tickets">
-            <button class="check-button">Check Your Ticket</button>
+            <button class="check-button" onclick="showTicketCheck()">Check Your Ticket</button>
+            <div id="ticketCheck" class="ticket-check">
+                <h2>Check Your Ticket</h2>
+                <label for="ticketNumber">Enter your ticket number:</label>
+                <input type="text" id="ticketNumber" placeholder="Ticket Number">
+                <button onclick="checkTicket()">Check</button>
+            </div>
         </div>
 
         <!-- Winners List -->
@@ -234,17 +219,17 @@
                 <tbody>
                     <tr>
                         <td>1</td>
-                        <td>Ar****</td>
+                        <td>Ali</td>
                         <td>$10,000</td>
                     </tr>
                     <tr>
                         <td>2</td>
-                        <td>M***</td>
+                        <td>Aisha</td>
                         <td>$5,000</td>
                     </tr>
                     <tr>
                         <td>3</td>
-                        <td>S****</td>
+                        <td>Michael</td>
                         <td>$2,500</td>
                     </tr>
                 </tbody>
@@ -257,56 +242,66 @@
             <div class="steps">
                 <div class="step">
                     <h3>Step 1</h3>
-                    <p>Deposit USDT </p>
+                    <p>Purchase a ticket.</p>
                 </div>
                 <div class="step">
                     <h3>Step 2</h3>
-                    <p>We'll reach you on Telegram </p>
+                    <p>Join the draw.</p>
                 </div>
                 <div class="step">
                     <h3>Step 3</h3>
-                    <p>There will be an automatic draw and we will contact you if you win.</p>
+                    <p>Check the results.</p>
                 </div>
             </div>
         </section>
     </div>
 
     <script>
-        let countdown;
-        let timeLeft = 24 * 60 * 60; // 24 hours in seconds
+        let paymentTimeLeft = 24 * 60 * 60; // 24 hours in seconds
+        let drawTimeLeft = 24 * 60 * 60; // 24 hours in seconds
 
-        function showPaymentForm() {
-            const form = document.getElementById('paymentForm');
-            form.style.display = 'block';
-            startCountdown();
-        }
-
-        function closePaymentForm() {
-            const form = document.getElementById('paymentForm');
-            form.style.display = 'none';
-        }
-
-        function paymentDone() {
-            alert("Thank you! Your payment will be verified, and your ticket number will be sent to your Telegram in 5 minutes.");
-            closePaymentForm();
-        }
-
-        function startCountdown() {
-            clearInterval(countdown);
-            countdown = setInterval(() => {
+        function startCountdown(id, timeLeft) {
+            const timerElement = document.getElementById(id);
+            const countdown = setInterval(() => {
                 if (timeLeft <= 0) {
                     clearInterval(countdown);
-                    document.getElementById('timer').textContent = "Time is up!";
+                    timerElement.textContent = "Time is up!";
                 } else {
                     let hours = Math.floor(timeLeft / 3600);
                     let minutes = Math.floor((timeLeft % 3600) / 60);
                     let seconds = timeLeft % 60;
-                    document.getElementById('timer').textContent = 
+                    timerElement.textContent =
                         `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
                     timeLeft--;
                 }
             }, 1000);
         }
+
+        function showPaymentForm() {
+            document.getElementById('paymentForm').style.display = 'block';
+            startCountdown('paymentTimer', paymentTimeLeft);
+        }
+
+        function paymentDone() {
+            alert("Thank you! Your payment will be verified, and your ticket number will be sent to your Telegram in 5 minutes.");
+            document.getElementById('paymentForm').style.display = 'none';
+        }
+
+        function showTicketCheck() {
+            const ticketCheck = document.getElementById('ticketCheck');
+            ticketCheck.style.display = ticketCheck.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function checkTicket() {
+            const ticketNumber = document.getElementById('ticketNumber').value;
+            if (ticketNumber) {
+                alert(`Ticket ${ticketNumber} is valid! Good luck!`);
+            } else {
+                alert("Please enter a ticket number!");
+            }
+        }
+
+        startCountdown('drawTimer', drawTimeLeft);
     </script>
 </body>
 </html>
